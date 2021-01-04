@@ -16,6 +16,7 @@ class WifiConnect(MycroftSkill):
         # TODO skill settings
         self.ssid = "OVOS"
         self.pswd = None
+        self.grace_period = 45
         self.time_between_checks = 30  # seconds
         self.wifi_command = "sudo /usr/local/sbin/wifi-connect --portal-ssid {ssid}"
         if self.pswd:
@@ -58,6 +59,7 @@ class WifiConnect(MycroftSkill):
 
     def _watchdog(self):
         self.monitoring = True
+        sleep(self.grace_period)
         while self.monitoring:
             if self.in_setup:
                 sleep(1)  # let setup do it's thing
