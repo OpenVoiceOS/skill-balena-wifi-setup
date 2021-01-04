@@ -21,6 +21,8 @@ class WifiConnect(MycroftSkill):
         self.wifi_command = "sudo /usr/local/sbin/wifi-connect --portal-ssid {ssid}"
         if self.pswd:
             self.wifi_command += " --portal-passphrase {pswd}"
+        if "color" not in self.settings:
+            self.settings["color"] = "#FF0000"
 
     def initialize(self):
         self.make_priority()
@@ -205,6 +207,7 @@ class WifiConnect(MycroftSkill):
         self.gui["phone_image"] = "1_phone_connect-to-ap.png"
         self.gui["prompt"] = "Connect to the \nWifi network"
         self.gui["highlight"] = self.ssid
+        self.gui["color"] = self.settings["color"]
         self.gui.show_page("prompt.qml")
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
@@ -216,6 +219,7 @@ class WifiConnect(MycroftSkill):
         self.gui["phone_image"] = "3_phone_choose-wifi.png"
         self.gui["prompt"] = "Choose the \nWifi network to \nconnect your \ndevice"
         self.gui["highlight"] = ""
+        self.gui["color"] = self.settings["color"]
         self.gui.show_page("prompt.qml")
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
