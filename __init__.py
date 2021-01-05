@@ -87,13 +87,7 @@ class WifiConnect(MycroftSkill):
                         self.log.exception(e)
                 else:
                     self.log.warning("CONNECTED TO WIFI, BUT NO INTERNET!!")
-            elif not self.connected:
-                # once first connected to internet increase time between checks
-                self.connected = True
-                self.time_between_checks += self.settings["increase_timeout_on_internet"]
-                # stop watchdog on internet connection
-                if self.settings["stop_on_internet"]:
-                    self.monitoring = False
+
             sleep(self.time_between_checks)
 
     # wifi setup
@@ -243,6 +237,12 @@ class WifiConnect(MycroftSkill):
 
     def report_setup_complete(self, message=None):
         """Wifi setup complete, network is connected."""
+        # once first connected to internet increase time between checks
+        self.connected = True
+        self.time_between_checks += self.settings["increase_timeout_on_internet"]
+        # stop watchdog on internet connection
+        if self.settings["stop_on_internet"]:
+            self.monitoring = False
         self.gui.remove_page("prompt.qml")
         self.gui.clear()
         self.gui["icon"] = "check-circle.svg"
