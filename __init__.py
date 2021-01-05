@@ -65,7 +65,7 @@ class WifiConnect(MycroftSkill):
                                          shell=True).decode("utf-8")
         if output.strip():
             self.log.info("Detected previously configured wifi, starting "
-                          "grace period to allow it to connected")
+                          "grace period to allow it to connect")
             sleep(self.grace_period)
         while self.monitoring:
             if self.in_setup:
