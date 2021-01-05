@@ -65,30 +65,36 @@ class WifiConnect(MycroftSkill):
         self.monitoring = False
 
     def _watchdog(self):
-        self.monitoring = True
-        output = subprocess.check_output("nmcli connection show | grep wifi",
-                                         shell=True).decode("utf-8")
-        if output.strip():
-            self.log.info("Detected previously configured wifi, starting "
-                          "grace period to allow it to connect")
-            sleep(self.grace_period)
-        while self.monitoring:
-            if self.in_setup:
-                sleep(1)  # let setup do it's thing
-                continue
+        try:
+            self.monitoring = True
+            self.log.info("Wifi watchdog started")
+            output = subprocess.check_output("nmcli connection show",
+                                             shell=True).decode("utf-8")
+            self.log.warning(output)
+            if "wifi" in output:
+                self.log.info("Detected previously configured wifi, starting "
+                              "grace period to allow it to connect")
+                sleep(self.grace_period)
+            while self.monitoring:
+                if self.in_setup:
+                    sleep(1)  # let setup do it's thing
+                    continue
 
-            if not connected():
-                self.log.info("NO INTERNET")
-                if not self.is_connected_to_wifi():
-                    self.log.info("LAUNCH SETUP")
-                    try:
-                        self.launch_wifi_setup()  # blocking
-                    except Exception as e:
-                        self.log.exception(e)
-                else:
-                    self.log.warning("CONNECTED TO WIFI, BUT NO INTERNET!!")
+                if not connected():
+                    self.log.info("NO INTERNET")
+                    if not self.is_connected_to_wifi():
+                        self.log.info("LAUNCH SETUP")
+                        try:
+                            self.launch_wifi_setup()  # blocking
+                        except Exception as e:
+                            self.log.exception(e)
+                    else:
+                        self.log.warning("CONNECTED TO WIFI, BUT NO INTERNET!!")
 
-            sleep(self.time_between_checks)
+                sleep(self.time_between_checks)
+        except Exception as e:
+            self.log.error("Wifi watchdog crashed unexpectedly")
+            self.log.exception(e)
 
     # wifi setup
     @staticmethod
