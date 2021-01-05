@@ -61,7 +61,12 @@ class WifiConnect(MycroftSkill):
 
     def _watchdog(self):
         self.monitoring = True
-        sleep(self.grace_period)
+        output = subprocess.check_output("nmcli connection show | grep wifi",
+                                         shell=True).decode("utf-8")
+        if output.strip():
+            self.log.info("Detected previously configured wifi, starting "
+                          "grace period to allow it to connected")
+            sleep(self.grace_period)
         while self.monitoring:
             if self.in_setup:
                 sleep(1)  # let setup do it's thing
@@ -281,3 +286,5 @@ class WifiConnect(MycroftSkill):
 
 def create_skill():
     return WifiConnect()
+
+
