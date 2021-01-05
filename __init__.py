@@ -70,7 +70,6 @@ class WifiConnect(MycroftSkill):
             self.log.info("Wifi watchdog started")
             output = subprocess.check_output("nmcli connection show",
                                              shell=True).decode("utf-8")
-            self.log.warning(output)
             if "wifi" in output:
                 self.log.info("Detected previously configured wifi, starting "
                               "grace period to allow it to connect")
