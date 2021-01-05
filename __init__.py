@@ -26,8 +26,8 @@ class WifiConnect(MycroftSkill):
             self.settings["color"] = "#FF0000"
         if "stop_on_internet" not in self.settings:
             self.settings["stop_on_internet"] = False
-        if "increase_timeout_on_internet" not in self.settings:
-            self.settings["increase_timeout_on_internet"] = 60
+        if "timeout_after_internet" not in self.settings:
+            self.settings["timeout_after_internet"] = 90
 
     def initialize(self):
         self.make_priority()
@@ -239,7 +239,7 @@ class WifiConnect(MycroftSkill):
         """Wifi setup complete, network is connected."""
         # once first connected to internet increase time between checks
         self.connected = True
-        self.time_between_checks += self.settings["increase_timeout_on_internet"]
+        self.time_between_checks = self.settings["timeout_after_internet"]
         # stop watchdog on internet connection
         if self.settings["stop_on_internet"]:
             self.monitoring = False
