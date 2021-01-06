@@ -221,7 +221,7 @@ class WifiConnect(MycroftSkill):
         """Provide instructions for setting up wifi."""
         self.gui.remove_page("status.qml")
         self.gui["phone_image"] = "1_phone_connect-to-ap.png"
-        self.gui["prompt"] = "Connect to the \nWifi network"
+        self.gui["prompt"] = "Connect to the Wi-Fi network"
         self.gui["highlight"] = self.ssid
         self.gui["color"] = self.settings["color"]
         self.gui.show_page("prompt.qml")
@@ -233,8 +233,8 @@ class WifiConnect(MycroftSkill):
         self.gui.remove_page("status.qml")
         self.gui.clear()
         self.gui["phone_image"] = "3_phone_choose-wifi.png"
-        self.gui["prompt"] = "Choose the \nWifi network to \nconnect your \ndevice"
-        self.gui["highlight"] = ""
+        self.gui["prompt"] = "Select local Wi-Fi network to connect"
+        self.gui["highlight"] = "OVOS Device"
         self.gui["color"] = self.settings["color"]
         self.gui.show_page("prompt.qml")
         # allow GUI to linger around for a bit, will block the wifi setup loop
