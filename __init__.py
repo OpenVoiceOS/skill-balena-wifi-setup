@@ -1,6 +1,8 @@
 from mycroft import MycroftSkill, intent_handler
 from mycroft.util import create_daemon, connected
 from mycroft.configuration import LocalConf, USER_CONFIG
+from mycroft.api import is_paired
+from mycroft.messagebus.message import Message
 import subprocess
 import pexpect
 from time import sleep
@@ -224,7 +226,7 @@ class WifiConnect(MycroftSkill):
         self.gui["prompt"] = "Connect to the Wi-Fi network"
         self.gui["highlight"] = self.ssid
         self.gui["color"] = self.settings["color"]
-        self.gui.show_page("prompt.qml")
+        self.gui.show_page("prompt.qml", override_idle=True, override_animations=True)
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
 
@@ -236,7 +238,7 @@ class WifiConnect(MycroftSkill):
         self.gui["prompt"] = "Select local Wi-Fi network to connect"
         self.gui["highlight"] = "OVOS Device"
         self.gui["color"] = self.settings["color"]
-        self.gui.show_page("prompt.qml")
+        self.gui.show_page("prompt.qml", override_idle=True, override_animations=True)
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
 
@@ -254,10 +256,14 @@ class WifiConnect(MycroftSkill):
         self.gui["label"] = "Connected"
         self.gui["bgColor"] = "#40DBB0"
         self.gui.remove_page("prompt.qml")
-        self.gui.show_page("status.qml")
+        self.gui.show_page("status.qml", override_idle=True, override_animations=True)
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(3)
-        self.gui.release()
+        if not is_paired():
+            self.bus.emit(Message("mycroft.not.paired"))
+        else:
+            self.bus.emit(Message("show.not.ready"))
+            self.gui.release()
 
     def report_setup_failed(self, message=None):
         """Wifi setup failed"""
@@ -267,7 +273,7 @@ class WifiConnect(MycroftSkill):
         self.gui["icon"] = "times-circle.svg"
         self.gui["label"] = "Connection Failed"
         self.gui["bgColor"] = "#FF0000"
-        self.gui.show_page("status.qml")
+        self.gui.show_page("status.qml", override_idle=True, override_animations=True)
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
 
