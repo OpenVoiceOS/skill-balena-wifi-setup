@@ -250,11 +250,9 @@ class WifiConnect(MycroftSkill):
         sleep(3)
         if not is_paired():
             self.bus.emit(Message("mycroft.not.paired"))
-        elif not self.mycroft_ready:
-            self.bus.emit(Message("show.not.ready"))
+            self.gui.release()
         else:
-            self.bus.emit(Message("mycroft.display.reset_idle"))
-        self.gui.release()
+            self.manage_setup_display("not-ready", "status")
 
     def report_setup_failed(self, message=None):
         """Wifi setup failed"""
@@ -271,28 +269,30 @@ class WifiConnect(MycroftSkill):
             self.gui["highlight"] = self.ssid
             self.gui["color"] = self.settings["color"]
             self.gui["page_type"] = "Prompt"
-            self.gui.show_page("NetworkLoader.qml", override_idle=True, override_animations=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True)
         elif state == "select-network" and page_type == "prompt":
             self.gui["image"] = "3_phone_choose-wifi.png"
             self.gui["label"] = "Select local Wi-Fi network to connect"
             self.gui["highlight"] = "OVOS Device"
             self.gui["color"] = self.settings["color"]
             self.gui["page_type"] = "Prompt"
-            self.gui.show_page("NetworkLoader.qml", override_idle=True, override_animations=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True)
         elif state == "setup-completed" and page_type == "status":
             self.gui["image"] = "icons/check-circle.svg"
             self.gui["label"] = "Connected"
             self.gui["highlight"] = ""
             self.gui["color"] = "#40DBB0"
             self.gui["page_type"] = "Status"
-            self.gui.show_page("NetworkLoader.qml", override_idle=True, override_animations=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True)
         elif state == "setup-failed" and page_type == "status":
             self.gui["image"] = "icons/times-circle.svg"
             self.gui["label"] = "Connection Failed"
             self.gui["highlight"] = ""
             self.gui["color"] = "#FF0000"
             self.gui["page_type"] = "Status"
-            self.gui.show_page("NetworkLoader.qml", override_idle=True, override_animations=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True)
+        elif state == "not-ready" and page_type == "status":
+            self.gui.show_page("NotReady.qml", override_animations=True)
 
     # cleanup
     def stop_setup(self):
