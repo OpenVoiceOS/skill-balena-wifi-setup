@@ -249,7 +249,8 @@ class WifiConnect(MycroftSkill):
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(3)
         if not is_paired():
-            self.bus.emit(Message("mycroft.not.paired"))
+            #self.bus.emit(Message("mycroft.not.paired"))
+            self.bus.emit(Message("balena.wifi.setup.completed"))
             self.gui.release()
         else:
             self.manage_setup_display("not-ready", "status")
@@ -270,6 +271,7 @@ class WifiConnect(MycroftSkill):
             self.gui["color"] = self.settings["color"]
             self.gui["page_type"] = "Prompt"
             self.gui.show_page("NetworkLoader.qml", override_animations=True)
+            self.bus.emit(Message("balena.wifi.setup.started"))
         elif state == "select-network" and page_type == "prompt":
             self.gui["image"] = "3_phone_choose-wifi.png"
             self.gui["label"] = "Select local Wi-Fi network to connect"
@@ -293,6 +295,7 @@ class WifiConnect(MycroftSkill):
             self.gui.show_page("NetworkLoader.qml", override_animations=True)
         elif state == "not-ready" and page_type == "status":
             self.gui.show_page("NotReady.qml", override_animations=True)
+            self.bus.emit(Message("balena.wifi.setup.completed"))
 
     # cleanup
     def stop_setup(self):
