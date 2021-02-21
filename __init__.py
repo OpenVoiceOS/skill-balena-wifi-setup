@@ -249,8 +249,8 @@ class WifiConnect(MycroftSkill):
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(3)
         if not is_paired():
-            #self.bus.emit(Message("mycroft.not.paired"))
             self.bus.emit(Message("balena.wifi.setup.completed"))
+            self.bus.emit(Message("mycroft.not.paired"))
             self.gui.release()
         else:
             self.manage_setup_display("not-ready", "status")
