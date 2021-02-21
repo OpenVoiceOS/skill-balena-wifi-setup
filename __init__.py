@@ -1,7 +1,6 @@
 from mycroft import MycroftSkill, intent_handler
 from mycroft.util import create_daemon, connected
-from mycroft.configuration import LocalConf, USER_CONFIG
-from mycroft.api import is_paired
+from ovos_utils.skills import blacklist_skill, make_priority_skill
 from mycroft.messagebus.message import Message
 import subprocess
 import pexpect
@@ -33,7 +32,13 @@ class WifiConnect(MycroftSkill):
             self.settings["timeout_after_internet"] = 90
 
     def initialize(self):
-        self.make_priority()
+        # make priority skill if needed
+        make_priority_skill(self.skill_id)
+        # blacklist conflicting skill
+        # TODO this depends on the final folder name
+        #  assuming a standard install via msm / osm
+        blacklist_skill("skill-wifi-connect.mycroftai")
+
         self.add_event("mycroft.internet.connected",
                        self.handle_internet_connected)
         self.add_event("mycroft.ready", 
@@ -42,28 +47,6 @@ class WifiConnect(MycroftSkill):
 
     def handle_mycroft_ready(self):
         self.mycroft_ready = True
-
-    def make_priority(self):
-        if not self.skill_id:
-            # might not be set yet....
-            return
-        # load the current list of already blacklisted skills
-        priority_list = self.config_core["skills"]["priority_skills"]
-
-        # add the skill to the blacklist
-        if self.skill_id not in priority_list:
-            priority_list.insert(0, self.skill_id)
-
-            # load the user config file (~/.mycroft/mycroft.conf)
-            conf = LocalConf(USER_CONFIG)
-            if "skills" not in conf:
-                conf["skills"] = {}
-
-            # update the blacklist field
-            conf["skills"]["priority_skills"] = priority_list
-
-            # save the user config file
-            conf.store()
 
     # internet watchdog
     def start_internet_check(self):
@@ -131,6 +114,7 @@ class WifiConnect(MycroftSkill):
         restart = False
         if self.debug:
             self.speak_dialog("start_setup")
+        self.bus.emit(Message("ovos.wifi.setup.started"))
         while self.in_setup:
             try:
                 out = self.wifi_process.readline().decode("utf-8").strip()
@@ -248,12 +232,9 @@ class WifiConnect(MycroftSkill):
         self.manage_setup_display("setup-completed", "status")
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(3)
-        if not is_paired():
-            self.bus.emit(Message("balena.wifi.setup.completed"))
-            self.bus.emit(Message("mycroft.not.paired"))
-            self.gui.release()
-        else:
-            self.manage_setup_display("not-ready", "status")
+        self.bus.emit(Message("ovos.wifi.setup.completed"))
+        # pairing skill should take over now
+        self.gui.release()
 
     def report_setup_failed(self, message=None):
         """Wifi setup failed"""
@@ -271,7 +252,6 @@ class WifiConnect(MycroftSkill):
             self.gui["color"] = self.settings["color"]
             self.gui["page_type"] = "Prompt"
             self.gui.show_page("NetworkLoader.qml", override_animations=True)
-            self.bus.emit(Message("balena.wifi.setup.started"))
         elif state == "select-network" and page_type == "prompt":
             self.gui["image"] = "3_phone_choose-wifi.png"
             self.gui["label"] = "Select local Wi-Fi network to connect"
@@ -293,9 +273,6 @@ class WifiConnect(MycroftSkill):
             self.gui["color"] = "#FF0000"
             self.gui["page_type"] = "Status"
             self.gui.show_page("NetworkLoader.qml", override_animations=True)
-        elif state == "not-ready" and page_type == "status":
-            self.gui.show_page("NotReady.qml", override_animations=True)
-            self.bus.emit(Message("balena.wifi.setup.completed"))
 
     # cleanup
     def stop_setup(self):
