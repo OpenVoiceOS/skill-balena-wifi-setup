@@ -10,12 +10,13 @@ from time import sleep
 class WifiConnect(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
+        self.reload_skill = False  # no reloading until boot finishes
         self.monitoring = False
         self.in_setup = False
         self.connected = False
         self.wifi_process = None
         self.debug = False  # dev setting, VERY VERBOSE DIALOGS
-        # TODO skill settings
+        # TODO expose all this in skill settings
         self.ssid = "OVOS"
         self.pswd = None
         self.grace_period = 45
@@ -47,6 +48,7 @@ class WifiConnect(MycroftSkill):
 
     def handle_mycroft_ready(self):
         self.mycroft_ready = True
+        self.reload_skill = True  # allow reloading again
 
     # internet watchdog
     def start_internet_check(self):
@@ -102,6 +104,8 @@ class WifiConnect(MycroftSkill):
         return WifiConnect.get_wifi_ssid() is not None
 
     def launch_wifi_setup(self):
+        if not self.in_setup:
+            self.bus.emit(Message("ovos.wifi.setup.started"))
         self.stop_setup()
         self.in_setup = True
         self.wifi_process = pexpect.spawn(
@@ -113,8 +117,8 @@ class WifiConnect(MycroftSkill):
         prev = ""
         restart = False
         if self.debug:
-            self.speak_dialog("start_setup")
-        self.bus.emit(Message("ovos.wifi.setup.started"))
+            self.speak_dialog("debug_start_setup")
+
         while self.in_setup:
             try:
                 out = self.wifi_process.readline().decode("utf-8").strip()
@@ -125,39 +129,39 @@ class WifiConnect(MycroftSkill):
                     aps = list(out.split("Access points: ")[-1])
                     self.log.info(out)
                     if self.debug:
-                        self.speak_dialog("wifi_scanned")
+                        self.speak_dialog("debug_wifi_scanned")
                 elif out.startswith("Starting access point..."):
                     if self.debug:
-                        self.speak_dialog("ap_start")
+                        self.speak_dialog("debug_ap_start")
                 elif out.startswith("Access point ") and \
                         out.endswith("created"):
                     self.prompt_to_join_ap()
                     if self.debug:
-                        self.speak_dialog("ap_created")
+                        self.speak_dialog("debug_ap_created")
                 elif out.startswith("Starting HTTP server on"):
                     self.log.debug(out)
                     if self.debug:
-                        self.speak_dialog("http_started")
+                        self.speak_dialog("debug_http_started")
                 elif out.startswith("Stopping access point"):
                     if self.debug:
-                        self.speak_dialog("ap_stop")
+                        self.speak_dialog("debug_ap_stop")
                 elif out.startswith("Access point ") and \
                         out.endswith("stopped"):
                     if self.debug:
-                        self.speak_dialog("ap_stopped")
+                        self.speak_dialog("debug_ap_stopped")
                 elif out == "User connected to the captive portal":
                     self.log.info(out)
                     self.prompt_to_select_network()
                     if self.debug:
-                        self.speak_dialog("user_connected")
+                        self.speak_dialog("debug_user_connected")
                 elif out.startswith("Connecting to access point"):
                     if self.debug:
-                        self.speak_dialog("connecting")
+                        self.speak_dialog("debug_connecting")
                 elif out.startswith("Internet connectivity established"):
                     self.log.info(out)
                     self.report_setup_complete()
                     if self.debug:
-                        self.speak_dialog("wifi_connected")
+                        self.speak_dialog("debug_wifi_connected")
                 elif "Error" in out or "[Errno" in out:
                     self.log.error(out)
                     self.report_setup_failed()
@@ -194,7 +198,7 @@ class WifiConnect(MycroftSkill):
             # Error: Getting access points failed
             self.launch_wifi_setup()
         elif self.debug:
-            self.speak_dialog("end_setup")
+            self.speak_dialog("debug_end_setup")
 
     # intents
     @intent_handler("launch_setup.intent")
@@ -238,7 +242,7 @@ class WifiConnect(MycroftSkill):
 
     def report_setup_failed(self, message=None):
         """Wifi setup failed"""
-        self.speak_dialog("wifi_error")
+        self.speak_dialog("debug_wifi_error")
         self.manage_setup_display("setup-failed", "status")
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
