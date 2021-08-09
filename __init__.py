@@ -48,7 +48,6 @@ class WifiConnect(MycroftSkill):
 
     def handle_mycroft_ready(self):
         self.mycroft_ready = True
-        self.reload_skill = True  # allow reloading again
 
     # internet watchdog
     def start_internet_check(self):
