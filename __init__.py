@@ -215,12 +215,14 @@ class WifiConnect(MycroftSkill):
     # GUI events
     def prompt_to_join_ap(self, message=None):
         """Provide instructions for setting up wifi."""
+        self.speak_dialog("wifi_intro_2")
         self.manage_setup_display("join-ap", "prompt")
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
 
     def prompt_to_select_network(self, message=None):
         """Prompt user to select network and login."""
+        self.speak_dialog("wifi_intro_3")
         self.manage_setup_display("select-network", "prompt")
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
