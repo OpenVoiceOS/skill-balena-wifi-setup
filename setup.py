@@ -2,7 +2,7 @@
 from setuptools import setup
 
 # skill_id=package_name:SkillClass
-PLUGIN_ENTRY_POINT = 'skill-balena-wifi-setup.openvoiceos=ovos_plugin_balena_wifi_setup:WifiConnectSkill'
+PLUGIN_ENTRY_POINT = 'skill-balena-wifi-setup.openvoiceos=ovos_skill_balena_wifi_setup:WifiConnectSkill'
 
 setup(
     # this is the package name that goes on pip
@@ -13,9 +13,9 @@ setup(
     author='JarbasAi',
     author_email='jarbasai@mailfence.com',
     license='Apache-2.0',
-    package_dir={"ovos_plugin_balena_wifi_setup": ""},
-    package_data={'ovos_plugin_balena_wifi_setup': ['locale/*', "ui/*"]},
-    packages=['ovos_plugin_balena_wifi_setup'],
+    package_dir={"ovos_skill_balena_wifi_setup": ""},
+    package_data={'ovos_skill_balena_wifi_setup': ['locale/*', "ui/*"]},
+    packages=['ovos_skill_balena_wifi_setup'],
     include_package_data=True,
     install_requires=["ovos-plugin-manager>=0.0.2"],
     keywords='ovos skill plugin',
