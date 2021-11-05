@@ -1,0 +1,26 @@
+skillMetadata:
+  sections:
+    - name: Setup Mode
+      fields:
+        - name: managed_by_skill
+          type: checkbox
+          label: Enable Skill Internet Checks
+          value: True
+        - name: stop_on_internet
+          type: checkbox
+          label: Stop checking connection once established
+          value: False
+        - name: timeout_after_internet
+          type: number
+          label: Time in seconds between connection checks
+          value: 90
+    - name: Network
+      fields:
+        - name: ssid
+          type: text
+          label: Network Name (SSID)
+          value: "OVOS"
+        - name: psk
+          type: text
+          label: Network Key (PSK)
+          value: ""

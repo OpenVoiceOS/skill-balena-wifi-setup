@@ -5,6 +5,7 @@ from mycroft.messagebus.message import Message
 import subprocess
 import pexpect
 from time import sleep
+from ovos_utils.log import LOG
 
 
 class WifiConnect(MycroftSkill):
@@ -22,15 +23,15 @@ class WifiConnect(MycroftSkill):
         self.grace_period = 45
         self.time_between_checks = 30  # seconds
         self.mycroft_ready = False
-        self.wifi_command = "sudo /usr/local/sbin/wifi-connect --portal-ssid {ssid}"
-        if self.pswd:
-            self.wifi_command += " --portal-passphrase {pswd}"
         if "color" not in self.settings:
             self.settings["color"] = "#FF0000"
         if "stop_on_internet" not in self.settings:
             self.settings["stop_on_internet"] = False
         if "timeout_after_internet" not in self.settings:
             self.settings["timeout_after_internet"] = 90
+        self.wifi_command = "sudo wifi-connect --portal-ssid {ssid}"
+        if self.pswd:
+            self.wifi_command += " --portal-passphrase {pswd}"
 
     def initialize(self):
         # make priority skill if needed
@@ -40,11 +41,18 @@ class WifiConnect(MycroftSkill):
         #  assuming a standard install via msm / osm
         blacklist_skill("skill-wifi-connect.mycroftai")
 
+        self.ssid = self.settings.get("ssid") or self.ssid
+        self.pswd = self.settings.get("psk") or self.pswd
+        if self.pswd == "":
+            self.pswd = None
+
         self.add_event("mycroft.internet.connected",
                        self.handle_internet_connected)
         self.add_event("mycroft.ready", 
                        self.handle_mycroft_ready)
-        self.start_internet_check()
+        if self.settings.get("managed_by_skill", True):
+            LOG.info("Skill-based internet checks enabled")
+            self.start_internet_check()
 
     def handle_mycroft_ready(self):
         self.mycroft_ready = True
