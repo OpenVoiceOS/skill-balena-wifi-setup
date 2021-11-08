@@ -17,9 +17,9 @@ class WifiConnect(MycroftSkill):
         self.connected = False
         self.wifi_process = None
         self.debug = False  # dev setting, VERY VERBOSE DIALOGS
-        # TODO expose all this in skill settings
-        self.ssid = "OVOS"
+        self.ssid = None
         self.pswd = None
+        self.setup_url = None
         self.grace_period = 45
         self.time_between_checks = 30  # seconds
         self.mycroft_ready = False
@@ -41,8 +41,9 @@ class WifiConnect(MycroftSkill):
         #  assuming a standard install via msm / osm
         blacklist_skill("skill-wifi-connect.mycroftai")
 
-        self.ssid = self.settings.get("ssid") or self.ssid
-        self.pswd = self.settings.get("psk") or self.pswd
+        self.ssid = self.settings.get("ssid") or "OVOS"
+        self.setup_url = self.settings.get("url") or "start dot openvoiceos dot com"
+        self.pswd = self.settings.get("psk") or None
         if self.pswd == "":
             self.pswd = None
 
@@ -67,12 +68,12 @@ class WifiConnect(MycroftSkill):
     def _watchdog(self):
         try:
             self.monitoring = True
-            self.log.info("Wifi watchdog started")
+            LOG.info("Wifi watchdog started")
             output = subprocess.check_output("nmcli connection show",
                                              shell=True).decode("utf-8")
             if "wifi" in output:
-                self.log.info("Detected previously configured wifi, starting "
-                              "grace period to allow it to connect")
+                LOG.info("Detected previously configured wifi, starting "
+                         "grace period to allow it to connect")
                 sleep(self.grace_period)
             while self.monitoring:
                 if self.in_setup:
@@ -80,20 +81,20 @@ class WifiConnect(MycroftSkill):
                     continue
 
                 if not connected():
-                    self.log.info("NO INTERNET")
+                    LOG.info("NO INTERNET")
                     if not self.is_connected_to_wifi():
-                        self.log.info("LAUNCH SETUP")
+                        LOG.info("LAUNCH SETUP")
                         try:
                             self.launch_wifi_setup()  # blocking
                         except Exception as e:
-                            self.log.exception(e)
+                            LOG.exception(e)
                     else:
-                        self.log.warning("CONNECTED TO WIFI, BUT NO INTERNET!!")
+                        LOG.warning("CONNECTED TO WIFI, BUT NO INTERNET!!")
 
                 sleep(self.time_between_checks)
         except Exception as e:
-            self.log.error("Wifi watchdog crashed unexpectedly")
-            self.log.exception(e)
+            LOG.error("Wifi watchdog crashed unexpectedly")
+            LOG.exception(e)
 
     # wifi setup
     @staticmethod
@@ -134,7 +135,7 @@ class WifiConnect(MycroftSkill):
                 prev = out
                 if out.startswith("Access points: "):
                     aps = list(out.split("Access points: ")[-1])
-                    self.log.info(out)
+                    LOG.info(out)
                     if self.debug:
                         self.speak_dialog("debug_wifi_scanned")
                 elif out.startswith("Starting access point..."):
@@ -146,7 +147,7 @@ class WifiConnect(MycroftSkill):
                     if self.debug:
                         self.speak_dialog("debug_ap_created")
                 elif out.startswith("Starting HTTP server on"):
-                    self.log.debug(out)
+                    LOG.debug(out)
                     if self.debug:
                         self.speak_dialog("debug_http_started")
                 elif out.startswith("Stopping access point"):
@@ -157,7 +158,7 @@ class WifiConnect(MycroftSkill):
                     if self.debug:
                         self.speak_dialog("debug_ap_stopped")
                 elif out == "User connected to the captive portal":
-                    self.log.info(out)
+                    LOG.info(out)
                     self.prompt_to_select_network()
                     if self.debug:
                         self.speak_dialog("debug_user_connected")
@@ -165,12 +166,12 @@ class WifiConnect(MycroftSkill):
                     if self.debug:
                         self.speak_dialog("debug_connecting")
                 elif out.startswith("Internet connectivity established"):
-                    self.log.info(out)
+                    LOG.info(out)
                     self.report_setup_complete()
                     if self.debug:
                         self.speak_dialog("debug_wifi_connected")
                 elif "Error" in out or "[Errno" in out:
-                    self.log.error(out)
+                    LOG.error(out)
                     self.report_setup_failed()
 
                     # TODO figure out at least the errors handled gracefully
@@ -185,10 +186,10 @@ class WifiConnect(MycroftSkill):
                         break
 
                 if self.debug:
-                    self.log.debug(out)
+                    LOG.debug(out)
             except pexpect.exceptions.EOF:
                 # exited
-                self.log.info("Exited wifi setup process")
+                LOG.info("Exited wifi setup process")
                 break
             except pexpect.exceptions.TIMEOUT:
                 # nothing happened for a while
@@ -196,7 +197,7 @@ class WifiConnect(MycroftSkill):
             except KeyboardInterrupt:
                 break
             except Exception as e:
-                self.log.exception(e)
+                LOG.exception(e)
                 break
         self.stop_setup()
         if restart:
@@ -223,14 +224,14 @@ class WifiConnect(MycroftSkill):
     def prompt_to_join_ap(self, message=None):
         """Provide instructions for setting up wifi."""
         self.manage_setup_display("join-ap", "prompt")
-        self.speak_dialog("wifi_intro_2")
+        self.speak_dialog("wifi_intro_2", {"ssid": self.ssid})
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
 
     def prompt_to_select_network(self, message=None):
         """Prompt user to select network and login."""
         self.manage_setup_display("select-network", "prompt")
-        self.speak_dialog("wifi_intro_3")
+        self.speak_dialog("wifi_intro_3", {"url": self.setup_url})
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
 
@@ -292,23 +293,23 @@ class WifiConnect(MycroftSkill):
         if self.wifi_process is not None:
             try:
                 if self.wifi_process.isalive():
-                    self.log.debug("terminating wifi setup process")
+                    LOG.debug("terminating wifi setup process")
                     self.wifi_process.sendcontrol('c')
                     sleep(1)
                     self.wifi_process.close()
                     sleep(1)
                 if self.wifi_process.isalive():
-                    self.log.warning('wifi setup did not exit gracefully.')
+                    LOG.warning('wifi setup did not exit gracefully.')
                     self.wifi_process.close(force=True)
                     sleep(1)
                     if self.wifi_process.isalive():
-                        self.log.warning('trying to terminate wifi setup process')
+                        LOG.warning('trying to terminate wifi setup process')
                         self.wifi_process.terminate()
                         sleep(1)
                 else:
-                    self.log.debug('wifi setup exited gracefully.')
+                    LOG.debug('wifi setup exited gracefully.')
             except Exception as e:
-                self.log.exception(e)
+                LOG.exception(e)
         self.wifi_process = None
         self.in_setup = False
 

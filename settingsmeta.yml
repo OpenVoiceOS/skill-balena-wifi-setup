@@ -24,3 +24,7 @@ skillMetadata:
           type: text
           label: Network Key (PSK)
           value: ""
+        - name: url
+          type: text
+          label: Setup URL
+          value: start dot openvoiceos dot com
