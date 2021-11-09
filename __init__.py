@@ -7,6 +7,8 @@ import pexpect
 from time import sleep
 from ovos_utils.log import LOG
 
+DEFAULT_SSID = "WiFi Connect"
+
 
 class WifiConnect(MycroftSkill):
     def __init__(self):
@@ -17,21 +19,11 @@ class WifiConnect(MycroftSkill):
         self.connected = False
         self.wifi_process = None
         self.debug = False  # dev setting, VERY VERBOSE DIALOGS
-        self.ssid = None
-        self.pswd = None
         self.setup_url = None
         self.grace_period = 45
         self.time_between_checks = 30  # seconds
         self.mycroft_ready = False
-        if "color" not in self.settings:
-            self.settings["color"] = "#FF0000"
-        if "stop_on_internet" not in self.settings:
-            self.settings["stop_on_internet"] = False
-        if "timeout_after_internet" not in self.settings:
-            self.settings["timeout_after_internet"] = 90
-        self.wifi_command = "sudo wifi-connect --portal-ssid {ssid}"
-        if self.pswd:
-            self.wifi_command += " --portal-passphrase {pswd}"
+        self.wifi_command = "sudo wifi-connect"
 
     def initialize(self):
         # make priority skill if needed
@@ -41,11 +33,15 @@ class WifiConnect(MycroftSkill):
         #  assuming a standard install via msm / osm
         blacklist_skill("skill-wifi-connect.mycroftai")
 
-        self.ssid = self.settings.get("ssid") or "OVOS"
-        self.setup_url = self.settings.get("url") or "start dot openvoiceos dot com"
-        self.pswd = self.settings.get("psk") or None
-        if self.pswd == "":
-            self.pswd = None
+        self.wifi_command = self.settings.get("wifi_command") or self.wifi_command
+
+        if self.settings.get("ssid"):
+            self.wifi_command += f"--portal-ssid {self.settings['ssid']}"
+        else:
+            LOG.info(f"Using default ssid: {DEFAULT_SSID}")
+            self.settings["ssid"] = DEFAULT_SSID
+        if self.settings.get("psk"):
+            self.wifi_command += f" --portal-passphrase {self.settings['psk']}"
 
         self.add_event("mycroft.internet.connected",
                        self.handle_internet_connected)
@@ -99,13 +95,13 @@ class WifiConnect(MycroftSkill):
     # wifi setup
     @staticmethod
     def get_wifi_ssid():
-        SSID = None
+        ssid = None
         try:
-            SSID = subprocess.check_output(["iwgetid", "-r"]).strip()
+            ssid = subprocess.check_output(["iwgetid", "-r"]).strip()
         except subprocess.CalledProcessError:
             # If there is no connection subprocess throws a 'CalledProcessError'
             pass
-        return SSID
+        return ssid
 
     @staticmethod
     def is_connected_to_wifi():
@@ -116,9 +112,7 @@ class WifiConnect(MycroftSkill):
             self.bus.emit(Message("ovos.wifi.setup.started"))
         self.stop_setup()
         self.in_setup = True
-        self.wifi_process = pexpect.spawn(
-            self.wifi_command.format(ssid=self.ssid)
-        )
+        self.wifi_process = pexpect.spawn(self.wifi_command)
         # https://github.com/pexpect/pexpect/issues/462
         self.wifi_process.delayafterclose = 1
         self.wifi_process.delayafterterminate = 1
@@ -134,7 +128,7 @@ class WifiConnect(MycroftSkill):
                     continue
                 prev = out
                 if out.startswith("Access points: "):
-                    aps = list(out.split("Access points: ")[-1])
+                    # aps = list(out.split("Access points: ")[-1])
                     LOG.info(out)
                     if self.debug:
                         self.speak_dialog("debug_wifi_scanned")
@@ -224,7 +218,7 @@ class WifiConnect(MycroftSkill):
     def prompt_to_join_ap(self, message=None):
         """Provide instructions for setting up wifi."""
         self.manage_setup_display("join-ap", "prompt")
-        self.speak_dialog("wifi_intro_2", {"ssid": self.ssid})
+        self.speak_dialog("wifi_intro_2", {"ssid": self.settings["ssid"]})
         # allow GUI to linger around for a bit, will block the wifi setup loop
         sleep(2)
 
@@ -262,7 +256,7 @@ class WifiConnect(MycroftSkill):
         if state == "join-ap" and page_type == "prompt":
             self.gui["image"] = "1_phone_connect-to-ap.png"
             self.gui["label"] = "Connect to the Wi-Fi network"
-            self.gui["highlight"] = self.ssid
+            self.gui["highlight"] = self.settings["ssid"]
             self.gui["color"] = self.settings["color"]
             self.gui["page_type"] = "Prompt"
             self.gui.show_page("NetworkLoader.qml", override_animations=True)
