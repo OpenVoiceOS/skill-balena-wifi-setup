@@ -36,7 +36,7 @@ class WifiConnect(MycroftSkill):
         self.wifi_command = self.settings.get("wifi_command") or self.wifi_command
 
         if self.settings.get("ssid"):
-            self.wifi_command += f"--portal-ssid {self.settings['ssid']}"
+            self.wifi_command += f" --portal-ssid {self.settings['ssid']}"
         else:
             LOG.info(f"Using default ssid: {DEFAULT_SSID}")
             self.settings["ssid"] = DEFAULT_SSID
