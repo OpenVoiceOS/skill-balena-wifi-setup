@@ -7,7 +7,7 @@ import pexpect
 from time import sleep
 
 
-class WifiConnect(MycroftSkill):
+class WifiConnectSkill(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
         self.reload_skill = False  # no reloading until boot finishes
@@ -100,7 +100,7 @@ class WifiConnect(MycroftSkill):
 
     @staticmethod
     def is_connected_to_wifi():
-        return WifiConnect.get_wifi_ssid() is not None
+        return WifiConnectSkill.get_wifi_ssid() is not None
 
     def launch_wifi_setup(self):
         if not self.in_setup:
@@ -310,4 +310,4 @@ class WifiConnect(MycroftSkill):
 
 
 def create_skill():
-    return WifiConnect()
+    return WifiConnectSkill()
