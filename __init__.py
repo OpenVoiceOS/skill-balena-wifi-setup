@@ -272,16 +272,14 @@ class WifiConnectSkill(MycroftSkill):
             self.gui["highlight"] = ""
             self.gui["color"] = "#40DBB0"
             self.gui["page_type"] = "Status"
-            self.gui.show_page("NetworkLoader.qml", override_animations=True,
-                               override_idle=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True)
         elif state == "setup-failed" and page_type == "status":
             self.gui["image"] = "icons/times-circle.svg"
             self.gui["label"] = "Connection Failed"
             self.gui["highlight"] = ""
             self.gui["color"] = "#FF0000"
             self.gui["page_type"] = "Status"
-            self.gui.show_page("NetworkLoader.qml", override_animations=True,
-                               override_idle=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True)
 
     # cleanup
     def stop_setup(self):
