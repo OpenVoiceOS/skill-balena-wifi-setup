@@ -1,0 +1,46 @@
+skillMetadata:
+  sections:
+    - name: Setup Mode
+      fields:
+        - name: managed_by_skill
+          type: checkbox
+          label: Enable Skill Internet Checks
+          value: True
+        - name: stop_on_internet
+          type: checkbox
+          label: Stop checking connection once established
+          value: False
+        - name: timeout_after_internet
+          type: number
+          label: Seconds between checks for internet connectivity after connection is established
+          value: 90
+        - name: grace_period
+          type: number
+          label: Grace period before starting network checks
+          value: 45
+        - name: time_between_checks
+          type: number
+          label: Seconds between checks for internet connectivity before connection is established
+          value: 30
+        - name: color
+          type: text
+          label: Accent Color
+          value: "#FF0000"
+        - name: wifi_command
+          type: text
+          label: CLI command to start wifi setup
+          value: "sudo wifi-connect"
+    - name: Network
+      fields:
+        - name: ssid
+          type: text
+          label: Network Name (SSID)
+          value: "OVOS"
+        - name: psk
+          type: text
+          label: Network Key (PSK)
+          value: ""
+        - name: url
+          type: text
+          label: Setup URL
+          value: start dot openvoiceos dot com
