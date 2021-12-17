@@ -256,14 +256,16 @@ class WifiConnectSkill(MycroftSkill):
             self.gui["highlight"] = self.ssid
             self.gui["color"] = self.settings["color"]
             self.gui["page_type"] = "Prompt"
-            self.gui.show_page("NetworkLoader.qml", override_animations=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True,
+                               override_idle=True)
         elif state == "select-network" and page_type == "prompt":
             self.gui["image"] = "3_phone_choose-wifi.png"
             self.gui["label"] = "Select local Wi-Fi network to connect"
             self.gui["highlight"] = "OVOS Device"
             self.gui["color"] = self.settings["color"]
             self.gui["page_type"] = "Prompt"
-            self.gui.show_page("NetworkLoader.qml", override_animations=True)
+            self.gui.show_page("NetworkLoader.qml", override_animations=True,
+                               override_idle=True)
         elif state == "setup-completed" and page_type == "status":
             self.gui["image"] = "icons/check-circle.svg"
             self.gui["label"] = "Connected"
