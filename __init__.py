@@ -1,6 +1,5 @@
 from mycroft import MycroftSkill, intent_handler
 from mycroft.util import create_daemon, connected
-from ovos_utils.skills import blacklist_skill, make_priority_skill
 from mycroft.messagebus.message import Message
 import subprocess
 import pexpect
@@ -33,13 +32,6 @@ class WifiConnectSkill(MycroftSkill):
             self.settings["timeout_after_internet"] = 90
 
     def initialize(self):
-        # make priority skill if needed
-        make_priority_skill(self.skill_id)
-        # blacklist conflicting skill
-        # TODO this depends on the final folder name
-        #  assuming a standard install via msm / osm
-        blacklist_skill("skill-wifi-connect.mycroftai")
-
         self.add_event("mycroft.internet.connected",
                        self.handle_internet_connected)
         self.add_event("mycroft.ready", 
